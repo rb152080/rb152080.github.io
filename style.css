@@ -1,0 +1,42 @@
+:root {
+  --black: #111111;
+  --white: #f5f1e8;
+  --bone: #c7c7c7;
+  --gray: #3a3a3a;
+}
+
+body {
+  margin: 0;
+  background: var(--black);
+  color: var(--bone);
+  font-family: "JetBrainsMono Nerd Font", monospace;
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--gray);
+}
+
+nav a {
+  color: var(--bone);
+  text-decoration: none;
+  padding: 5px 10px;
+}
+
+nav a:hover {
+  color: var(--white);
+}
+
+.container {
+  height: calc(100vh - 60px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#typing {
+  font-size: 4rem;
+}
