@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terminal</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery.terminal/js/jquery.terminal.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/jquery.terminal/css/jquery.terminal.min.css"
+    />
+  </head>
+  <body>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="blogs.html">Blogs</a>
+      <a href="terminal.html">Terminal</a>
+    </nav>
+    <script>
+      $("body").terminal(
+        {
+          hello: function (what) {
+            this.echo("Hello, " + what + ". Wellcome to this terminal.");
+          },
+        },
+        {
+          greetings: "My First Web Terminal",
+        },
+      );
+    </script>
+          <!-- <span class="prompt">guest@user:~$</span> -->
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
