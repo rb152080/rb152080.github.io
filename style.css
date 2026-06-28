@@ -1,28 +1,47 @@
 :root {
   --black: #111111;
   --white: #f5f1e8;
-  --bone: #c7c7c7;
+  --bone-100: #c7c7c7;
+  --bone-95: #c7c7c7f2;
+  --bone-90: #c7c7c7e6;
+  --bone-70: #c7c7c7b3;
+  --gray-100: #3a3a3a;
   --gray-75: #3a3a3abf;
   --gray-50: #3a3a3a80;
+  --github-dark-background-75: #24292ebf;
+  --github-dark-background-70: #24292eb3;
+  --github-text-100: #e1e4e8;
+  --github-text-70: #e1e4e8b3;
+  font-variant-ligatures: none;
+  font-family: "JetBrainsMono Nerd Font", monospace;
 }
 
 body {
   margin: 0;
   background: var(--black);
-  color: var(--bone);
-  font-family: "JetBrainsMono Nerd Font", monospace;
+  color: var(--bone-100);
+  padding-top: 55px;
 }
 
 nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: var(--black);
+  z-index: 1000;
+
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 15px;
   padding: 12px 20px;
   border-bottom: 1px solid var(--gray-50);
 }
 
 nav a {
-  color: var(--bone);
+  color: var(--bone-70);
   text-decoration: none;
   padding: 5px 10px;
 }
@@ -47,9 +66,7 @@ html {
 }
 
 .terminal {
-  font-family: "JetBrainsMono Nerd Font", monospace;
   background: var(--black);
-  font-size: 16px;
 }
 
 .blogs {
@@ -58,15 +75,16 @@ html {
 }
 
 .blogs h1 {
-  font-size: 36px;
+  font-size: 40px;
   margin-bottom: 20px;
+  color: var(--bone-100);
 }
 
 .blog {
   display: block;
   padding: 20px 0;
   font-size: 18px;
-  color: var(--bone);
+  color: var(--bone-100);
   text-decoration: none;
   border-top: 1px solid var(--gray-75);
   border-bottom: 1px solid var(--gray-75);
@@ -74,4 +92,79 @@ html {
 
 .blog:hover {
   color: var(--white);
+}
+
+.blogs p {
+  line-height: 1.6;
+  margin-bottom: 24px;
+  font-size: 16px;
+}
+
+.blogs h2 {
+  font-size: 30px;
+  margin-top: 40px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--gray-75);
+  padding-bottom: 8px;
+}
+
+.blogs h3 {
+  font-size: 24px;
+  margin-top: 30px;
+  margin-bottom: 12px;
+}
+
+.blogs code {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 0.9em;
+  padding: 0.1em 0.2em;
+  background-color: var(--github-dark-background-75);
+  color: var(--github-text-100);
+  border-radius: 6px;
+}
+
+.blogs pre.astro-code {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 16px;
+  line-height: 1.2;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid var(--gray-100);
+  margin-bottom: 28px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
+}
+
+/* removes astro settings */
+.blogs pre.astro-code code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.blogs p a {
+  color: var(--bone-100);
+}
+
+.blogs p a:hover {
+  text-decoration-color: var(--white);
+}
+
+.blogs em {
+  display: block;
+  border-left: 3px solid var(--gray-100);
+  padding-left: 15px;
+  color: var(--bone-70);
+  margin: 20px 0;
+}
+
+.blogs em code {
+  color: var(--github-text-70);
+  background-color: var(--github-dark-background-70);
+}
+
+#date {
+  border-left: none;
+  padding-left: 0;
+  color: var(--bone-70);
+  margin: 0;
 }

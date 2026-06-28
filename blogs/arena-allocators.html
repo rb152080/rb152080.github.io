@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Arena Allocators</title>
+    <link rel="stylesheet" href="../style.css" />
+  </head>
+  <body>
+    <nav>
+      <a href="../index.html">Home</a>
+      <a href="../blogs.html">Blogs</a>
+      <a href="../terminal.html">Terminal</a>
+    </nav>
+    <main class="blogs">
+      <h1 id="arena-allocators">Arena Allocators</h1>
+      <em id="date">June 28, 2026</em>
+      <h2 id="why-you-should-care-about-arena-allocators">
+        Why you should care about Arena Allocators
+      </h2>
+      <p>
+        Arena allocators are useful when writing high-performance C/C++ code,
+        especially when you have to allocate memory several times during your
+        program.
+      </p>
+
+      <h2 id="the-problem-with-malloc-and-new">
+        The Problem with <code>malloc</code> and <code>new</code>
+      </h2>
+      <p>
+        Typical <code>malloc</code> (in C) and <code>new</code> (in C++) calls
+        go to the heap each time the respective keyword is called. This
+        introduces CPU overhead since the memory allocator has to search for
+        free space. It also requires frequent system calls, forcing transitions
+        from user mode to kernel mode to get more memory from the operating
+        system. In addition, repeatedly allocating and deallocating from the
+        heap can cause memory fragmentation over time.
+      </p>
+
+      <h2 id="advantages-of-using-arena-allocators">
+        Advantages of using Arena Allocators
+      </h2>
+      <p>
+        Arena allocators request a massive chunk of memory all at once,
+        typically in the beginning of the program. So throughout the program,
+        whenever you need to allocate memory, you can just do it from that arena
+        and avoid needing to do a syscall each time. Because of this, arenas
+        reduce the risk of memory leaks since we only call
+        <code>malloc</code> and <code>free</code> once for the entire arena and
+        not for every individual object we allocate.
+      </p>
+
+      <p>
+        In addition, allocating from an arena happens in <samp>O(1)</samp> time,
+        since arenas use a pointer to the start of the free memory. Every time
+        we allocate an object, we just move the pointer up by the size of that
+        object. Once we are done using all of the objects in the arena, we can
+        restore the pointer back to the start of the arena. Now, if we were to
+        create new objects in the arena, it would just overwrite the ones we
+        don’t need anymore.
+      </p>
+
+      <h2 id="when-to-use-an-arena-allocator">
+        When to use an Arena Allocator
+      </h2>
+      <p>
+        Arena allocators are perfect when you have a good idea of your maximum
+        memory requirements, or when you need to allocate a large amount of
+        temporary objects that share the same lifetime. They are particularly
+        useful in games where there are graphical frames.
+      </p>
+
+      <p>
+        Modern video games render 60 to 144+ frames per second. This means that
+        the program needs to allocate memory up to hundreds of times per second
+        to display frames for the user to see. This is a situation in which you
+        do not want to call <code>malloc</code> and <code>free</code> for every
+        frame since it is a costly operation that would reduce performance and
+        cause lag in games.
+      </p>
+
+      <p>
+        So, this is a perfect example for when to use an arena allocator. You
+        allocate a dedicated arena specifically for frame data when the game
+        boots up. When a frame needs to be displayed, all of the data needed for
+        the frame to render is allocated in the arena. Once the frame is
+        displayed, the arena pointer gets reset back to the start of the arena
+        and the cycle repeats itself for every frame. That way the physical
+        memory allocation and deallocation only happens once at the start and
+        end of the game, keeping your frame rate smooth.
+      </p>
+
+      <h2 id="arena-implementation">Arena Implementation</h2>
+
+      <h3 id="creating-the-arena-object">Creating the Arena Object</h3>
+      <p>
+        We can create an arena object using a <code>struct</code>. We
+        <code>typedef uint64_t</code> as <code>u64</code> for convenience. We
+        use fixed-width integer types so that our memory calculations are
+        universal across all systems and leave no room for platform ambiguity.
+        We also use unsigned integers since we do not have to deal with negative
+        numbers.
+      </p>
+
+      <pre
+        class="astro-code github-dark"
+        style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
+        tabindex="0"
+        data-language="c"
+      ><code><span class="line"><span style="color:#F97583">typedef</span><span style="color:#F97583"> uint64_t</span><span style="color:#E1E4E8"> u64;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">typedef</span><span style="color:#F97583"> struct</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">    u64 capacity;</span></span>
+<span class="line"><span style="color:#E1E4E8">    u64 position;</span></span>
+<span class="line"><span style="color:#E1E4E8">} memory_arena;</span></span></code></pre>
+
+      <h3 id="initializing-and-destroying-the-arena">
+        Initializing and Destroying the Arena
+      </h3>
+      <p>
+        We now need a function that acts as a constructor to initialize the
+        arena struct’s fields. We create a macro for the arena’s base position
+        (<code>ARENA_BASE_POSITION</code>), which marks where the usable free
+        memory begins. We reserve <code>sizeof(memory_arena)</code> at the very
+        front of the allocation to store the two fields of the struct
+        (<code>capacity</code>, <code>position</code>), which take up 16 bytes
+        in total (8 bytes each).
+      </p>
+
+      <p>
+        Typically, developers using arenas know exactly how much memory they
+        will need altogether, so they can allocate it all at once. This
+        initialization is the only time the program triggers a syscall to the
+        operating system to reserve memory on the heap.
+      </p>
+
+      <pre
+        class="astro-code github-dark"
+        style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
+        tabindex="0"
+        data-language="c"
+      ><code><span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ARENA_BASE_POSITION</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">sizeof</span><span style="color:#E1E4E8">(memory_arena))</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#E1E4E8">memory_arena</span><span style="color:#F97583">*</span><span style="color:#B392F0"> arena_create</span><span style="color:#E1E4E8">(u64 </span><span style="color:#FFAB70">capacity</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">    memory_arena</span><span style="color:#F97583">*</span><span style="color:#E1E4E8"> arena </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (memory_arena</span><span style="color:#F97583">*</span><span style="color:#E1E4E8">)</span><span style="color:#B392F0">malloc</span><span style="color:#E1E4E8">(capacity);</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (arena </span><span style="color:#F97583">==</span><span style="color:#79B8FF"> NULL</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#79B8FF"> NULL</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">    arena->capacity </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> capacity;</span></span>
+<span class="line"><span style="color:#E1E4E8">    arena->position </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> ARENA_BASE_POSITION;</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#E1E4E8"> arena;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+
+      <p>
+        This next function acts as our destructor. When we are fully done with
+        our arena, we can discard it using a single call to <code>free</code>.
+      </p>
+
+      <pre
+        class="astro-code github-dark"
+        style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
+        tabindex="0"
+        data-language="c"
+      ><code><span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> arena_destroy</span><span style="color:#E1E4E8">(memory_arena</span><span style="color:#F97583">*</span><span style="color:#FFAB70"> arena</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#B392F0">    free</span><span style="color:#E1E4E8">(arena);</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+
+      <em
+        ><strong>Note:</strong> For demonstration and readability purposes, we
+        use <code>malloc</code> and <code>free</code> here. In production code,
+        developers often bypass these and instead directly use underlying
+        system-level kernel functions like <code>mmap</code> and
+        <code>munmap</code> (found in <code>&lt;sys/mman.h&gt;</code> if you are
+        on Linux).</em
+      >
+
+      <h3 id="pushing-something-onto-the-arena">
+        Pushing Something onto the Arena
+      </h3>
+      <p>
+        To allocate memory, our push function takes in two parameters: the arena
+        we want to use and the size of the data we want to request.
+      </p>
+      <p>
+        The <code>ALIGN_UP</code> and <code>ARENA_ALIGNMENT</code> macros handle
+        memory alignment. This is important because CPUs require data to sit on
+        specific memory addresses (typically powers of 2) for fast retrieval. We
+        use an alignment of <code>alignof(max_align_t)</code>, which represents
+        the strictest alignment requirement for standard scalar types in C (16
+        bytes for a <code>long double</code>).
+      </p>
+
+      <pre
+        class="astro-code github-dark"
+        style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
+        tabindex="0"
+        data-language="c"
+      ><code><span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ALIGN_UP</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">n</span><span style="color:#E1E4E8">, </span><span style="color:#FFAB70">p</span><span style="color:#E1E4E8">) (((u64)(n) </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> (u64)(p) </span><span style="color:#F97583">-</span><span style="color:#79B8FF"> 1</span><span style="color:#E1E4E8">) </span><span style="color:#F97583">&amp;</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">~</span><span style="color:#E1E4E8">((u64)(p) </span><span style="color:#F97583">-</span><span style="color:#79B8FF"> 1</span><span style="color:#E1E4E8">)))</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> ARENA_ALIGNMENT</span><span style="color:#E1E4E8"> (a</span><span style="color:#B392F0">lignof</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">max_align_t</span><span style="color:#E1E4E8">))</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">void*</span><span style="color:#B392F0"> arena_push</span><span style="color:#E1E4E8">(memory_arena</span><span style="color:#F97583">*</span><span style="color:#FFAB70"> arena</span><span style="color:#E1E4E8">, u64 </span><span style="color:#FFAB70">size</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">    u64 aligned_position </span><span style="color:#F97583">=</span><span style="color:#B392F0"> ALIGN_UP</span><span style="color:#E1E4E8">(arena->position, ARENA_ALIGNMENT);</span></span>
+<span class="line"><span style="color:#F97583">    if</span><span style="color:#E1E4E8"> (aligned_position </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> size </span><span style="color:#F97583">&lt;</span><span style="color:#E1E4E8"> arena->position </span><span style="color:#F97583">||</span></span>
+<span class="line"><span style="color:#E1E4E8">        aligned_position </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> size </span><span style="color:#F97583">&gt;</span><span style="color:#E1E4E8"> arena->capacity)</span></span>
+<span class="line"><span style="color:#F97583">        return</span><span style="color:#79B8FF"> NULL</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#F97583">    void*</span><span style="color:#E1E4E8"> memory </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">char*</span><span style="color:#E1E4E8">)arena </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> aligned_position;</span></span>
+<span class="line"><span style="color:#E1E4E8">    arena->position </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> aligned_position </span><span style="color:#F97583">+</span><span style="color:#E1E4E8"> size;</span></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#E1E4E8"> memory;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+
+      <h3 id="resetting-the-arena">Resetting the Arena</h3>
+      <p>
+        The great thing about arenas is how fast and cheap it is to clear them.
+        All you need to do is reset the pointer back to the base position.
+      </p>
+
+      <pre
+        class="astro-code github-dark"
+        style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
+        tabindex="0"
+        data-language="c"
+      ><code><span class="line"><span style="color:#F97583">void</span><span style="color:#B392F0"> arena_clear</span><span style="color:#E1E4E8">(memory_arena</span><span style="color:#F97583">*</span><span style="color:#FFAB70"> arena</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"><span style="color:#E1E4E8">    arena->position </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> ARENA_BASE_POSITION;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+
+      <h2 id="real-world-example-the-frame-arena">
+        Real-World Example: The Frame Arena
+      </h2>
+      <p>With our arena functions completed, we can now see them in action.</p>
+
+      <pre
+        class="astro-code github-dark"
+        style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
+        tabindex="0"
+        data-language="c"
+      ><code><span class="line"><span style="color:#F97583">int</span><span style="color:#B392F0"> main</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">void</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#E1E4E8">{</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">    // 1. Initialize the arena at the start of the game</span></span>
+<span class="line"><span style="color:#6A737D">    // We call it frame_arena because it is memory specifically reserved for the</span></span>
+<span class="line"><span style="color:#6A737D">    // frames in the game</span></span>
+<span class="line"><span style="color:#E1E4E8">    memory_arena</span><span style="color:#F97583">*</span><span style="color:#E1E4E8"> frame_arena </span><span style="color:#F97583">=</span><span style="color:#B392F0"> arena_create</span><span style="color:#E1E4E8">(</span><span style="color:#B392F0">MiB</span><span style="color:#E1E4E8">(</span><span style="color:#79B8FF">64</span><span style="color:#E1E4E8">));</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">    bool</span><span style="color:#E1E4E8"> game_is_running </span><span style="color:#F97583">=</span><span style="color:#79B8FF"> true</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">    // This loop executes many times every second (60+ FPS)</span></span>
+<span class="line"><span style="color:#F97583">    while</span><span style="color:#E1E4E8"> (game_is_running)</span></span>
+<span class="line"><span style="color:#E1E4E8">    {</span></span>
+<span class="line"><span style="color:#6A737D">        // 2. Temporary Gameplay Graphics Allocations</span></span>
+<span class="line"><span style="color:#F97583">        int*</span><span style="color:#E1E4E8"> particle_positions </span><span style="color:#F97583">=</span></span>
+<span class="line"><span style="color:#E1E4E8">            (</span><span style="color:#F97583">int*</span><span style="color:#E1E4E8">)</span><span style="color:#B392F0">arena_push</span><span style="color:#E1E4E8">(frame_arena, </span><span style="color:#F97583">sizeof</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">int</span><span style="color:#E1E4E8">) </span><span style="color:#F97583">*</span><span style="color:#79B8FF"> 1000</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"><span style="color:#F97583">        char*</span><span style="color:#E1E4E8"> frame_log_buffer </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> (</span><span style="color:#F97583">char*</span><span style="color:#E1E4E8">)</span><span style="color:#B392F0">arena_push</span><span style="color:#E1E4E8">(frame_arena, </span><span style="color:#79B8FF">256</span><span style="color:#E1E4E8">);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">        // 3. Simulating and rendering</span></span>
+<span class="line"><span style="color:#6A737D">        // These are arbitrary function names I came up with (for demonstration</span></span>
+<span class="line"><span style="color:#6A737D">        // purposes)</span></span>
+<span class="line"><span style="color:#B392F0">        update_game_physics</span><span style="color:#E1E4E8">(particle_positions);</span></span>
+<span class="line"><span style="color:#B392F0">        draw_frame</span><span style="color:#E1E4E8">(frame_log_buffer);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">        // 4. Wiping the canvas</span></span>
+<span class="line"><span style="color:#6A737D">        // Once the frame is drawn to the screen, we snap the pointer back to</span></span>
+<span class="line"><span style="color:#6A737D">        // the beginning for the next frame</span></span>
+<span class="line"><span style="color:#B392F0">        arena_clear</span><span style="color:#E1E4E8">(frame_arena);</span></span>
+<span class="line"><span style="color:#E1E4E8">    }</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#6A737D">    // 5. Clean up the heap memory once the user closes the game</span></span>
+<span class="line"><span style="color:#B392F0">    arena_destroy</span><span style="color:#E1E4E8">(frame_arena);</span></span>
+<span class="line"></span>
+<span class="line"><span style="color:#F97583">    return</span><span style="color:#79B8FF"> 0</span><span style="color:#E1E4E8">;</span></span>
+<span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
+
+      <h2 id="learn-more-about-arena-allocators">
+        Learn More about Arena Allocators
+      </h2>
+      <p>
+        If you want to learn more about arena allocators, you can check out Ryan
+        Fleury’s
+        <a href="https://www.youtube.com/watch?v=TZ5a3gCCZYo">video</a> and
+        <a
+          href="https://www.dgtlgrove.com/p/untangling-lifetimes-the-arena-allocator"
+          >article</a
+        >.
+      </p>
+    </main>
+  </body>
+</html>
