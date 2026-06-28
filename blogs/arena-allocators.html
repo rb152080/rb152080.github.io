@@ -236,7 +236,11 @@
         style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
         tabindex="0"
         data-language="c"
-      ><code><span class="line"><span style="color:#F97583">int</span><span style="color:#B392F0"> main</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">void</span><span style="color:#E1E4E8">)</span></span>
+      ><code><span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> KiB</span><span style="color:#E1E4E8">(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">)</span><span style="color:#E1E4E8"> ((</span><span style="color:#F97583">u64</span><span style="color:#E1E4E8">)(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">) &lt;&lt; </span><span style="color:#79B8FF">10</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> MiB</span><span style="color:#E1E4E8">(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">)</span><span style="color:#E1E4E8"> ((</span><span style="color:#F97583">u64</span><span style="color:#E1E4E8">)(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">) &lt;&lt; </span><span style="color:#79B8FF">20</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> GiB</span><span style="color:#E1E4E8">(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">)</span><span style="color:#E1E4E8"> ((</span><span style="color:#F97583">u64</span><span style="color:#E1E4E8">)(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">) &lt;&lt; </span><span style="color:#79B8FF">30</span><span style="color:#E1E4E8">)</span></span>
+
+<span class="line"><span style="color:#F97583">int</span><span style="color:#B392F0"> main</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">void</span><span style="color:#E1E4E8">)</span></span>
 <span class="line"><span style="color:#E1E4E8">{</span></span>
 <span class="line"></span>
 <span class="line"><span style="color:#6A737D">    // 1. Initialize the arena at the start of the game</span></span>
