@@ -72,7 +72,6 @@ html {
 .blogs {
   max-width: 900px;
   margin: 50px auto;
-  min-height: 100vh;
 }
 
 .blogs h1 {
