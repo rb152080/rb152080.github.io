@@ -21,7 +21,6 @@ body {
   background: var(--black);
   color: var(--bone-100);
   padding-top: 55px;
-  min-height: 100vh;
 }
 
 nav {
