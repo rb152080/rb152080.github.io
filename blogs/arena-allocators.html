@@ -11,9 +11,11 @@
       <a href="../blogs.html">Blogs</a>
       <a href="../terminal.html">Terminal</a>
     </nav>
+
     <main class="blogs">
       <h1 id="arena-allocators">Arena Allocators</h1>
-      <em id="date">June 28, 2026</em>
+      <p><em id="date">June 28, 2026</em></p>
+
       <h2 id="why-you-should-care-about-arena-allocators">
         Why you should care about Arena Allocators
       </h2>
@@ -48,11 +50,10 @@
         <code>malloc</code> and <code>free</code> once for the entire arena and
         not for every individual object we allocate.
       </p>
-
       <p>
-        In addition, allocating from an arena happens in <samp>O(1)</samp> time,
-        since arenas use a pointer to the start of the free memory. Every time
-        we allocate an object, we just move the pointer up by the size of that
+        In addition, allocating from an arena happens in $O(1)$ time, since
+        arenas use a pointer to the start of the free memory. Every time we
+        allocate an object, we just move the pointer up by the size of that
         object. Once we are done using all of the objects in the arena, we can
         restore the pointer back to the start of the arena. Now, if we were to
         create new objects in the arena, it would just overwrite the ones we
@@ -68,7 +69,6 @@
         temporary objects that share the same lifetime. They are particularly
         useful in games where there are graphical frames.
       </p>
-
       <p>
         Modern video games render 60 to 144+ frames per second. This means that
         the program needs to allocate memory up to hundreds of times per second
@@ -77,7 +77,6 @@
         frame since it is a costly operation that would reduce performance and
         cause lag in games.
       </p>
-
       <p>
         So, this is a perfect example for when to use an arena allocator. You
         allocate a dedicated arena specifically for frame data when the game
@@ -100,7 +99,6 @@
         We also use unsigned integers since we do not have to deal with negative
         numbers.
       </p>
-
       <pre
         class="astro-code github-dark"
         style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
@@ -126,14 +124,12 @@
         (<code>capacity</code>, <code>position</code>), which take up 16 bytes
         in total (8 bytes each).
       </p>
-
       <p>
         Typically, developers using arenas know exactly how much memory they
         will need altogether, so they can allocate it all at once. This
         initialization is the only time the program triggers a syscall to the
         operating system to reserve memory on the heap.
       </p>
-
       <pre
         class="astro-code github-dark"
         style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
@@ -150,12 +146,10 @@
 <span class="line"><span style="color:#E1E4E8">    arena->position </span><span style="color:#F97583">=</span><span style="color:#E1E4E8"> ARENA_BASE_POSITION;</span></span>
 <span class="line"><span style="color:#F97583">    return</span><span style="color:#E1E4E8"> arena;</span></span>
 <span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
-
       <p>
         This next function acts as our destructor. When we are fully done with
         our arena, we can discard it using a single call to <code>free</code>.
       </p>
-
       <pre
         class="astro-code github-dark"
         style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
@@ -165,15 +159,16 @@
 <span class="line"><span style="color:#E1E4E8">{</span></span>
 <span class="line"><span style="color:#B392F0">    free</span><span style="color:#E1E4E8">(arena);</span></span>
 <span class="line"><span style="color:#E1E4E8">}</span></span></code></pre>
-
-      <em
-        ><strong>Note:</strong> For demonstration and readability purposes, we
-        use <code>malloc</code> and <code>free</code> here. In production code,
-        developers often bypass these and instead directly use underlying
-        system-level kernel functions like <code>mmap</code> and
-        <code>munmap</code> (found in <code>&lt;sys/mman.h&gt;</code> if you are
-        on Linux).</em
-      >
+      <p>
+        <em
+          ><strong>Note:</strong> For demonstration and readability purposes, we
+          use <code>malloc</code> and <code>free</code> here. In production
+          code, developers often bypass these and instead directly use
+          underlying system-level kernel functions like <code>mmap</code> and
+          <code>munmap</code> (found in <code>&lt;sys/mman.h&gt;</code> if you
+          are on Linux).</em
+        >
+      </p>
 
       <h3 id="pushing-something-onto-the-arena">
         Pushing Something onto the Arena
@@ -190,7 +185,6 @@
         the strictest alignment requirement for standard scalar types in C (16
         bytes for a <code>long double</code>).
       </p>
-
       <pre
         class="astro-code github-dark"
         style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
@@ -215,7 +209,6 @@
         The great thing about arenas is how fast and cheap it is to clear them.
         All you need to do is reset the pointer back to the base position.
       </p>
-
       <pre
         class="astro-code github-dark"
         style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
@@ -230,16 +223,15 @@
         Real-World Example: The Frame Arena
       </h2>
       <p>With our arena functions completed, we can now see them in action.</p>
-
       <pre
         class="astro-code github-dark"
         style="background-color: #24292e; color: #e1e4e8; overflow-x: auto"
         tabindex="0"
         data-language="c"
-      ><code><span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> KiB</span><span style="color:#E1E4E8">(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">)</span><span style="color:#E1E4E8"> ((</span><span style="color:#F97583">u64</span><span style="color:#E1E4E8">)(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">) &lt;&lt; </span><span style="color:#79B8FF">10</span><span style="color:#E1E4E8">)</span></span>
-<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> MiB</span><span style="color:#E1E4E8">(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">)</span><span style="color:#E1E4E8"> ((</span><span style="color:#F97583">u64</span><span style="color:#E1E4E8">)(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">) &lt;&lt; </span><span style="color:#79B8FF">20</span><span style="color:#E1E4E8">)</span></span>
-<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> GiB</span><span style="color:#E1E4E8">(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">)</span><span style="color:#E1E4E8"> ((</span><span style="color:#F97583">u64</span><span style="color:#E1E4E8">)(</span><span style="color:#E1E4E8">n</span><span style="color:#E1E4E8">) &lt;&lt; </span><span style="color:#79B8FF">30</span><span style="color:#E1E4E8">)</span></span>
-
+      ><code><span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> KiB</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">n</span><span style="color:#E1E4E8">) ((u64)(n) </span><span style="color:#F97583">&lt;&lt;</span><span style="color:#79B8FF"> 10</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> MiB</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">n</span><span style="color:#E1E4E8">) ((u64)(n) </span><span style="color:#F97583">&lt;&lt;</span><span style="color:#79B8FF"> 20</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"><span style="color:#F97583">#define</span><span style="color:#B392F0"> GiB</span><span style="color:#E1E4E8">(</span><span style="color:#FFAB70">n</span><span style="color:#E1E4E8">) ((u64)(n) </span><span style="color:#F97583">&lt;&lt;</span><span style="color:#79B8FF"> 30</span><span style="color:#E1E4E8">)</span></span>
+<span class="line"></span>
 <span class="line"><span style="color:#F97583">int</span><span style="color:#B392F0"> main</span><span style="color:#E1E4E8">(</span><span style="color:#F97583">void</span><span style="color:#E1E4E8">)</span></span>
 <span class="line"><span style="color:#E1E4E8">{</span></span>
 <span class="line"></span>
