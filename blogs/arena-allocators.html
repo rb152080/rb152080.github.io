@@ -52,9 +52,9 @@
         not for every individual object we allocate.
       </p>
       <p>
-        In addition, allocating from an arena happens in $O(1)$ time, since
-        arenas use a pointer to the start of the free memory. Every time we
-        allocate an object, we just move the pointer up by the size of that
+        In addition, allocating from an arena happens in <samp>O(1)</samp> time,
+        since arenas use a pointer to the start of the free memory. Every time
+        we allocate an object, we just move the pointer up by the size of that
         object. Once we are done using all of the objects in the arena, we can
         restore the pointer back to the start of the arena. Now, if we were to
         create new objects in the arena, it would just overwrite the ones we
