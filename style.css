@@ -23,6 +23,24 @@ body {
   padding-top: 55px;
 }
 
+/* Particle background */
+#particles-js {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  inset: 0;
+}
+
+/* Keep your content above the particles */
+/* nav, */
+/* .container { */
+/*   position: relative; */
+/*   z-index: 1; */
+/* } */
+
 nav {
   position: fixed;
   top: 0;

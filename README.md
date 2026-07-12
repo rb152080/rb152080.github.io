@@ -11,5 +11,3 @@
 ## Future Improvements
 
 - Make the terminal do something useful
-- Use Express, Handlebars
-- Add some colors for the blog
