@@ -12,6 +12,7 @@
   --github-dark-background-70: #24292eb3;
   --github-text-100: #e1e4e8;
   --github-text-70: #e1e4e8b3;
+  --flamingo-text: #d7d7ff;
   font-variant-ligatures: none;
   font-family: "JetBrainsMono Nerd Font", monospace;
 }
@@ -49,7 +50,7 @@ nav {
   box-sizing: border-box;
   background-color: var(--black);
   z-index: 1000;
-
+  font-size: 16;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -69,7 +70,7 @@ nav a:hover {
 }
 
 .container {
-  height: calc(100vh - 60px);
+  height: calc(100vh - 55px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -83,8 +84,38 @@ html {
   overflow-y: scroll;
 }
 
-.terminal {
+#terminal {
+  height: calc(100vh - 55px);
+  width: 40%;
+  margin: 0 auto;
   background: var(--black);
+  position: relative;
+  z-index: 1;
+}
+
+#warp {
+  position: fixed;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+
+  z-index: 0;
+}
+
+/* .terminal { */
+/* --base-background: var(--black); */
+/* --base-color: var(--flamingo-text); */
+/* } */
+
+#terminal .terminal-scroller {
+  overflow-y: hidden;
+}
+
+#terminal * {
+  font-family: "JetBrainsMono Nerd Font", monospace;
+  font-size: 14px;
+  line-height: 1.2;
 }
 
 .blogs {
