@@ -87,11 +87,12 @@ html {
 
 #terminal {
   height: calc(100vh - 55px);
-  width: 40%;
-  margin: 0 auto;
+  width: 100%;
+  /* width: 40%; */
+  /* margin: 0 auto; */
   background: var(--black);
-  position: relative;
-  z-index: 1;
+  /* position: relative; */
+  /* z-index: 1; */
 }
 
 #terminal a {
@@ -102,24 +103,9 @@ html {
   color: var(--gruvbox-purple);
 }
 
-/* #terminal a:visited { */
-/*   color: var(--gruvbox-light-purple); */
-/*   text-decoration: none; */
+/* #terminal .terminal-scroller { */
+/*   overflow-y: hidden; */
 /* } */
-/**/
-/* #terminal a:visited:hover { */
-/*   color: var(--gruvbox-light-purple); */
-/*   text-decoration: underline; */
-/* } */
-
-/* #terminal a:active { */
-/*   color: #afd7d7; /* while clicking */
-*/
-/* } */
-
-#terminal .terminal-scroller {
-  overflow-y: hidden;
-}
 
 #terminal * {
   font-family: "JetBrainsMono Nerd Font", monospace;
