@@ -51,9 +51,10 @@ const help_menu = `[[;${gruvbox_palette.green};]Available Commands:]
 [[;${gruvbox_palette.orange};]cd blogs]      Go to blogs page
 [[;${gruvbox_palette.orange};]ls blogs]      List blogs
 [[;${gruvbox_palette.orange};]open github]   Open my GitHub
-[[;${gruvbox_palette.orange};]which theme]   Display theme
 [[;${gruvbox_palette.orange};]clear]         Clear the terminal
 [[;${gruvbox_palette.orange};]pi]            Print pi up to 50 decimal places
+
+Feel free to try out some other commands :)
 `;
 
 $("#terminal").terminal(
@@ -82,8 +83,12 @@ $("#terminal").terminal(
             this.echo("\n");
             return;
         }
+        if (what === "ls hobbies") {
+            this.echo("- computers\n- cars\n- watches\n- art\n");
+            return;
+        }
         if (what === "ls") {
-            this.echo("Usage: ls <blogs>\n");
+            this.echo("Usage: ls <blogs|hobbies>\n");
             return;
         }
         if (what === "open github") {
