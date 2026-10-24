@@ -12,6 +12,4 @@
 ## Future Improvements
 
 - Vim Navigation for entire website
-- Look into using a client side cache?
-- Maybe make the entire site Gruvbox Theme?
-- Add some more terminal commands (potentially output images)
+- Add some more terminal commands
